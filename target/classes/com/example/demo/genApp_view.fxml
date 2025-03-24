@@ -9,12 +9,19 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
 <VBox alignment="CENTER" fillWidth="false" maxHeight="400.0" maxWidth="500.0" minHeight="400.0" minWidth="500.0" prefHeight="400.0" prefWidth="500.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.GeneratorController">
     <padding>
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
     </padding>
-   <AnchorPane prefHeight="300.0" prefWidth="480.0" snapToPixel="false">
+   <Text lineSpacing="2.0" strokeType="OUTSIDE" strokeWidth="0.0" text="CSV TO SQL TRANSFORMATION">
+      <font>
+         <Font name="System Bold" size="18.0" />
+      </font>
+   </Text>
+   <AnchorPane maxHeight="500.0" maxWidth="500.0" prefHeight="300.0" prefWidth="481.0" snapToPixel="false">
       <children>
          <Label layoutX="36.0" layoutY="18.0" text="Database: " />
           <TextField fx:id="dbNameField" layoutX="121.0" layoutY="14.0" minHeight="10.0" minWidth="50.0" prefHeight="25.0" prefWidth="200.0" promptText="Database name" />
@@ -24,17 +31,23 @@
          <Label layoutX="34.0" layoutY="77.0" text="Batch size: " />
            <Button layoutX="35.0" layoutY="109.0" onAction="#handleUpload" prefHeight="30.0" prefWidth="130.0" text="Upload CSV" />
          <Label fx:id="fileLabel" layoutX="181.0" layoutY="109.0" prefHeight="30.0" prefWidth="300.0" />
-            <Button layoutX="35.0" layoutY="150.0" onAction="#handleChooseOutputDir" prefHeight="30.0" prefWidth="130.0" text="Select output dir" />
+            <Button layoutX="35.0" layoutY="150.0" onAction="#handleChooseOutputDir" prefHeight="30.0" prefWidth="130.0" text="Output folder" />
             <Label fx:id="outputDirLabel" layoutX="181.0" layoutY="150.0" prefHeight="30.0" prefWidth="300.0" />
-          <HBox layoutX="79.0" layoutY="205.0" prefHeight="20.0" prefWidth="222.0">
+          <HBox layoutX="135.0" layoutY="191.0" prefHeight="25.0" prefWidth="223.0">
               <children>
-                  <CheckBox fx:id="checkTruncate" mnemonicParsing="false" text="Truncate" />
-                  <RadioButton fx:id="appendRadio" mnemonicParsing="false" text="Append" />
-                  <RadioButton fx:id="createRadio" mnemonicParsing="false" text="Create" />
+                  <CheckBox fx:id="checkTruncate" mnemonicParsing="false" prefHeight="17.0" prefWidth="83.0" text="Truncate" />
+                    <RadioButton fx:id="appendRadio" mnemonicParsing="false" text="Append" />
+                    <RadioButton fx:id="createRadio" mnemonicParsing="false" text="Create" />
+
               </children>
       
           </HBox>
-          <Button layoutX="181.0" layoutY="260.0" onAction="#onGenButtonClick" prefHeight="30.0" prefWidth="130.0" text="Generate SQL code" />
+          <Button layoutX="181.0" layoutY="231.0" onAction="#onGenButtonClick" prefHeight="30.0" prefWidth="130.0" text="Generate SQL code" />
       </children>
    </AnchorPane>
+   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Designed by Viviane - vle@mcorp.ae">
+      <font>
+         <Font name="System Italic" size="10.0" />
+      </font>
+   </Text>
 </VBox>

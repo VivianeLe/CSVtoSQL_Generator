@@ -26,8 +26,7 @@ public class GeneratorController {
 
     @FXML
     public void initialize() {
-        // Set default mode
-        appendRadio.setSelected(true);
+        appendRadio.setSelected(true); // optional default
     }
 
     @FXML
