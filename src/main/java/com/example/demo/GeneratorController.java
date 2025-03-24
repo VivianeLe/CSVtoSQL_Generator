@@ -93,6 +93,10 @@ public class GeneratorController {
             }
 
             String[] headers = lines.get(0).split(",", -1);
+            for (int i = 0; i < headers.length; i++) {
+                headers[i] = headers[i].trim().replaceAll(" ", "_");
+            }
+
             int totalRows = lines.size() - 1;
             int numFiles = (int) Math.ceil((double) totalRows / batchSize);
 
