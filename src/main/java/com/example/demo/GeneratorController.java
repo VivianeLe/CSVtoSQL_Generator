@@ -18,9 +18,9 @@ public class GeneratorController {
     private Label welcomeText;
 
     @FXML private TextField dbNameField, tableNameField, batchSizeField;
-    @FXML private RadioButton appendRadio;
-    @FXML private CheckBox checkTruncate;
-    @FXML private RadioButton createRadio;
+    @FXML private CheckBox checkTruncate, checkHeader;
+    @FXML private RadioButton appendRadio, createRadio, upsertRadio;
+    @FXML private TextField keyColumnField;
     @FXML private Label fileLabel, outputDirLabel;
     private File selectedCSV, selectedOutputDir;
 
@@ -70,11 +70,15 @@ public class GeneratorController {
             mode = "append";
         } else if (createRadio.isSelected()) {
             mode = "create";
+        } else if (upsertRadio.isSelected()) {
+            mode = "upsert";
         } else {
             showAlert("Please select a mode.");
             return;
         }
+
         boolean truncate = checkTruncate.isSelected();
+        boolean header = checkHeader.isSelected();
 
         int batchSize;
         try {
@@ -86,17 +90,23 @@ public class GeneratorController {
 
         try {
             List<String> lines = Files.readAllLines(selectedCSV.toPath());
-            if (lines.size() <= 1) {
+            if (lines.isEmpty()) {
                 showAlert("CSV is empty or has no data rows.");
                 return;
             }
 
+            int totalRows;
             String[] headers = lines.get(0).split(",", -1);
             for (int i = 0; i < headers.length; i++) {
                 headers[i] = headers[i].trim().replaceAll(" ", "_");
             }
 
-            int totalRows = lines.size() - 1;
+            if (header) {
+                totalRows = lines.size() - 1;
+            } else {
+                totalRows = lines.size();
+            }
+
             int numFiles = (int) Math.ceil((double) totalRows / batchSize);
 
             for (int i = 0; i < numFiles; i++) {
@@ -124,22 +134,92 @@ public class GeneratorController {
                         writer.write("TRUNCATE TABLE " + tableName + ";\n");
                     }
 
-                    writer.write("INSERT INTO " + tableName + " (" + String.join(", ", headers) + ") VALUES\n");
-
-                    List<String> valuesList = new ArrayList<>();
-                    for (String line : chunk) {
-                        String[] values = line.split(",", -1);
-                        StringBuilder sb = new StringBuilder("(");
-                        for (int j = 0; j < values.length; j++) {
-                            String val = values[j].replace("'", "''").trim();
-                            if (val.isEmpty()) sb.append("NULL");
-                            else sb.append("N'").append(val).append("'");
-                            if (j < values.length - 1) sb.append(", ");
+                    if ("upsert".equals(mode)) {
+                        String keyColumn = keyColumnField.getText().trim();
+                        if (keyColumn.isEmpty()) {
+                            showAlert("Please enter the key column for UPSERT.");
+                            return;
                         }
-                        sb.append(")");
-                        valuesList.add(sb.toString());
+
+                        // Validate key column exists
+                        boolean keyExists = false;
+                        for (String h : headers) {
+                            if (h.equalsIgnoreCase(keyColumn)) {
+                                keyExists = true;
+                                break;
+                            }
+                        }
+                        if (!keyExists) {
+                            showAlert("Key column '" + keyColumn + "' not found in CSV header.");
+                            return;
+                        }
+
+                        for (String line : chunk) {
+                            String[] values = line.split(",", -1);
+                            if (values.length != headers.length) continue;
+
+                            StringBuilder insertCols = new StringBuilder();
+                            StringBuilder insertVals = new StringBuilder();
+                            StringBuilder updateSet = new StringBuilder();
+
+                            for (int j = 0; j < headers.length; j++) {
+                                String col = headers[j];
+                                String val = values[j].replace("'", "''").trim();
+                                String safeVal = val.isEmpty() ? "NULL" : "'" + val + "'";
+
+                                insertCols.append(col).append(", ");
+                                insertVals.append(safeVal).append(", ");
+
+                                // Only update non-key columns
+                                if (!col.equalsIgnoreCase(keyColumn)) {
+                                    updateSet.append(col).append(" = ").append(safeVal).append(", ");
+                                }
+                            }
+
+                            // Trim trailing commas
+                            if (!insertCols.isEmpty()) insertCols.setLength(insertCols.length() - 2);
+                            if (!insertVals.isEmpty()) insertVals.setLength(insertVals.length() - 2);
+                            if (!updateSet.isEmpty()) updateSet.setLength(updateSet.length() - 2);
+
+                            writer.write("INSERT INTO " + tableName + " (" + insertCols + ") VALUES (" + insertVals + ") ");
+                            writer.write("ON DUPLICATE KEY UPDATE " + updateSet + ";\n\n");
+                        }
                     }
-                    writer.write(String.join(",\n", valuesList) + ";\n");
+                    else {
+
+                        // Normal INSERT
+                        writer.write("INSERT INTO " + tableName + " VALUES\n");
+                        List<String> valuesList = new ArrayList<>();
+                        for (String line : chunk) {
+                            String[] values = line.split(",", -1);
+                            StringBuilder sb = new StringBuilder("(");
+                            for (int j = 0; j < values.length; j++) {
+                                String val = values[j].replace("'", "''").trim();
+                                if (val.isEmpty()) sb.append("NULL");
+                                else sb.append("N'").append(val).append("'");
+                                if (j < values.length - 1) sb.append(", ");
+                            }
+                            sb.append(")");
+                            valuesList.add(sb.toString());
+                        }
+                        writer.write(String.join(",\n", valuesList) + ";\n");
+                    }
+
+//                    writer.write("INSERT INTO " + tableName + " VALUES\n");
+//                    List<String> valuesList = new ArrayList<>();
+//                    for (String line : chunk) {
+//                        String[] values = line.split(",", -1);
+//                        StringBuilder sb = new StringBuilder("(");
+//                        for (int j = 0; j < values.length; j++) {
+//                            String val = values[j].replace("'", "''").trim();
+//                            if (val.isEmpty()) sb.append("NULL");
+//                            else sb.append("N'").append(val).append("'");
+//                            if (j < values.length - 1) sb.append(", ");
+//                        }
+//                        sb.append(")");
+//                        valuesList.add(sb.toString());
+//                    }
+//                    writer.write(String.join(",\n", valuesList) + ";\n");
                 }
             }
 
