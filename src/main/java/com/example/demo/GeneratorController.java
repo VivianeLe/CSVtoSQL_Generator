@@ -336,7 +336,8 @@ public class GeneratorController {
     );
 
     private static final Set<String> MONEY_COLUMNS = Set.of(
-            "top_up_amount", "personal_expense", "company_expenses", "has_arrived"
+            "top_up_amount", "personal_expense", "company_expenses", "has_arrived",
+            "withdrawal_amount_(aed)"
     );
 
     private static final Set<String> DATETIME_COLUMNS = Set.of(
@@ -366,20 +367,25 @@ public class GeneratorController {
 
             if (truncate) writer.write("TRUNCATE TABLE " + tableName + ";\n");
 
-            writer.write("INSERT INTO " + tableName + " VALUES\n");
+            writer.write("INSERT INTO " + tableName + "VALUES\n");
             List<String> valuesList = new ArrayList<>();
             for (String[] values : chunk) {
                 StringBuilder sb = new StringBuilder("(");
                 for (int j = 0; j < indices.size(); j++) {
                     String col = headers.get(j);
-                    String val = indices.get(j) < values.length ? values[indices.get(j)].replace("'", "''").trim() : "";
+                    String val = indices.get(j) < values.length ? values[indices.get(j)]
+                            .replace("'", "''").trim() : "";
 
                     if (NUMERIC_COLUMNS.contains(col.toLowerCase())) {
                         val = val.replaceAll("\\D", "");
                     }
 
                     if (MONEY_COLUMNS.contains(col.toLowerCase())) {
-                        val = val.replaceAll("AED", "");
+                        System.out.println(col.toLowerCase());
+                        val = val.replaceAll("AED", "")
+                                .replaceAll(",", "").trim();
+                        float floatVal = Float.parseFloat(val);
+                        val = String.format("%.2f", floatVal);
                     }
 
                     if (DATETIME_COLUMNS.contains(col.toLowerCase())) {
